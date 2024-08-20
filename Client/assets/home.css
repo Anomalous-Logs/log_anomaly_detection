@@ -1,0 +1,8 @@
+.home__inp {
+  display: flex;
+  justify-content: space-between;
+  padding: 0 40px;
+}
+.home__table {
+  padding: 40px 20px;
+}
