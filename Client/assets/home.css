@@ -1,3 +1,9 @@
+.home_container {
+  display: flex;
+  flex-direction: column;
+  /* width: 50%; */
+}
+
 .home__inp {
   display: flex;
   justify-content: space-between;
@@ -5,4 +11,8 @@
 }
 .home__table {
   padding: 40px 20px;
+}
+.dash-table-container {
+  /* width: 50%; */
+  overflow-y: scroll;
 }
