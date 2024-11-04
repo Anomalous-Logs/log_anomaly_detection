@@ -7,7 +7,7 @@ BASE_URL = 'http://10.20.7.251:9090/api/v1/query_range?'
 
 
 class Query:
-    def json_to_dataframe(self, query: str, start = None, end = None, step = None) -> pd.DataFrame:
+    def json_to_dataframe(query: str, start = None, end = None, step = None) -> pd.DataFrame:
         full_url = Query.get_url(query, start, end, step)
         print(full_url)
         response = requests.get(full_url)
@@ -33,76 +33,76 @@ class Query:
 
 
 class BlackboxProbe(Query):
-    def probe_failed(self, start = None, end = None, step = None) -> pd.DataFrame:
+    def probe_failed(start = None, end = None, step = None) -> pd.DataFrame:
         query = 'probe_success'
-        return self.json_to_dataframe(query, start, end, step)
+        return Query.json_to_dataframe(query, start, end, step)
 
-    def probe_http_failure(self, start = None, end = None, step = None) -> pd.DataFrame:
+    def probe_http_failure(start = None, end = None, step = None) -> pd.DataFrame:
         query = 'probe_http_status_code'
-        return self.json_to_dataframe(query, start, end, step)
+        return Query.json_to_dataframe(query, start, end, step)
 
-    def ssl_certificate_will_expire_soon_warning(self, start = None, end = None, step = None) -> pd.DataFrame:
+    def ssl_certificate_will_expire_soon_warning(start = None, end = None, step = None) -> pd.DataFrame:
         query = 'last_over_time(probe_ssl_earliest_cert_expiry[10m]) - time()'
-        return self.json_to_dataframe(query, start, end, step)
+        return Query.json_to_dataframe(query, start, end, step)
 
-    def ssl_certificate_will_expire_soon_critical(self, start = None, end = None, step = None) -> pd.DataFrame:
+    def ssl_certificate_will_expire_soon_critical(start = None, end = None, step = None) -> pd.DataFrame:
         query = 'last_over_time(probe_ssl_earliest_cert_expiry[10m]) - time()'
-        return self.json_to_dataframe(query, start, end, step)
+        return Query.json_to_dataframe(query, start, end, step)
 
-    def ssl_certificate_expired(self, start = None, end = None, step = None) -> pd.DataFrame:
+    def ssl_certificate_expired(start = None, end = None, step = None) -> pd.DataFrame:
         query = 'last_over_time(probe_ssl_earliest_cert_expiry[10m]) - time()'
-        return self.json_to_dataframe(query, start, end, step)
+        return Query.json_to_dataframe(query, start, end, step)
 
-    def slow_http_probe(self, start = None, end = None, step = None) -> pd.DataFrame:
+    def slow_http_probe(start = None, end = None, step = None) -> pd.DataFrame:
         query = 'avg_over_time(probe_http_duration_seconds[1m])'
-        return self.json_to_dataframe(query, start, end, step)
+        return Query.json_to_dataframe(query, start, end, step)
 
 class CpuUsageQuery(Query):
-    def high_cpu_usage(self, start = None, end = None, step = None) -> pd.DataFrame:
+    def high_cpu_usage(start = None, end = None, step = None) -> pd.DataFrame:
         query = 'sum by (instance) (avg by (mode, instance) (rate(node_cpu_seconds_total{mode!="idle"}[2m])))'
-        return self.json_to_dataframe(query, start, end, step)
+        return Query.json_to_dataframe(query, start, end, step)
 
-    def windows_server_cpu_usage(self, start = None, end = None, step = None) -> pd.DataFrame:
+    def windows_server_cpu_usage(start = None, end = None, step = None) -> pd.DataFrame:
         query = 'avg by (instance) (rate(windows_cpu_time_total{mode="idle"}[2m]))'
-        return self.json_to_dataframe(query, start, end, step)
+        return Query.json_to_dataframe(query, start, end, step)
 
 class DiskUsageQuery(Query):
-    def host_out_of_disk_space(self, start = None, end = None, step = None) -> pd.DataFrame:
+    def host_out_of_disk_space(start = None, end = None, step = None) -> pd.DataFrame:
         query = 'node_filesystem_avail_bytes / node_filesystem_size_bytes'
-        return self.json_to_dataframe(query, start, end, step)
+        return Query.json_to_dataframe(query, start, end, step)
 
 class MemoryUsageQuery(Query):
-    def host_out_of_memory(self, start = None, end = None, step = None) -> pd.DataFrame:
+    def host_out_of_memory(start = None, end = None, step = None) -> pd.DataFrame:
         query = 'node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes'
-        return self.json_to_dataframe(query, start, end, step)
+        return Query.json_to_dataframe(query, start, end, step)
 
-    def windows_server_memory_usage(self, start = None, end = None, step = None) -> pd.DataFrame:
+    def windows_server_memory_usage(start = None, end = None, step = None) -> pd.DataFrame:
         query = 'windows_os_physical_memory_free_bytes / windows_cs_physical_memory_bytes'
-        return self.json_to_dataframe(query, start, end, step)
+        return Query.json_to_dataframe(query, start, end, step)
 
 class NetworkThroughputQuery(Query):
-    def unusual_network_throughput_in(self, start = None, end = None, step = None) -> pd.DataFrame:
+    def unusual_network_throughput_in(start = None, end = None, step = None) -> pd.DataFrame:
         query = 'sum by (instance) (rate(node_network_receive_bytes_total[2m]))'
-        return self.json_to_dataframe(query, start, end, step)
+        return Query.json_to_dataframe(query, start, end, step)
 
-    def unusual_network_throughput_out(self, start = None, end = None, step = None) -> pd.DataFrame:
+    def unusual_network_throughput_out(start = None, end = None, step = None) -> pd.DataFrame:
         query = 'sum by (instance) (rate(node_network_transmit_bytes_total[2m]))'
-        return self.json_to_dataframe(query, start, end, step)
+        return Query.json_to_dataframe(query, start, end, step)
     
 class PrometheusMonitoringQuery(Query):
-    def prometheus_target_missing(self, start = None, end = None, step = None) -> pd.DataFrame:
+    def prometheus_target_missing(start = None, end = None, step = None) -> pd.DataFrame:
         query = 'up'
-        return self.json_to_dataframe(query, start, end, step)
+        return Query.json_to_dataframe(query, start, end, step)
 
 class CollectorErrorQuery(Query):
-    def windows_server_collector_error(self, start = None, end = None, step = None) -> pd.DataFrame:
+    def windows_server_collector_error(start = None, end = None, step = None) -> pd.DataFrame:
         query = 'windows_exporter_collector_success'
-        return self.json_to_dataframe(query, start, end, step)
+        return Query.json_to_dataframe(query, start, end, step)
 
 class WindowsServerServiceQuery(Query):
-    def windows_server_collector_error(self, start = None, end = None, step = None) -> pd.DataFrame:
+    def windows_server_collector_error(start = None, end = None, step = None) -> pd.DataFrame:
         query = 'windows_exporter_collector_success'
-        return self.json_to_dataframe(query, start, end, step)
+        return Query.json_to_dataframe(query, start, end, step)
 
 
 # Test phương thức 
@@ -122,6 +122,5 @@ except Exception as e:
 """
 
 if __name__ == "__main__":
-    bb = BlackboxProbe()
-    df = bb.probe_failed(start=-3600)
+    df = BlackboxProbe.probe_failed(start=-3600)
     breakpoint()
