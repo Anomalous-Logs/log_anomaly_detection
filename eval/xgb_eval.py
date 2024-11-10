@@ -142,5 +142,5 @@ for n in n_components:
 
 # Optionally print all scores at once
 print("\nCross-Validation Scores:")
-for n, score in zip(n_components_range, cv_scores):
+for n, score in zip(n_components, cv_scores):
     print(f"Number of Components: {n}, Score: {score:.4f}")
