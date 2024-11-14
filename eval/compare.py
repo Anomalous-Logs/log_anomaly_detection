@@ -25,7 +25,7 @@ from sklearn.utils import resample
 from imblearn.over_sampling import SMOTE
 
 
-model_types = ['LogisticRegression', 'DecisionTree', 'RandomForest', 'KNeighbors', 'XGBoost', 'LightGBM', 'CatBoost']
+model_types = ['LogisticRegression', 'DecisionTree', 'RandomForest', 'XGBoost', 'LightGBM', 'CatBoost']
 log_file = 'compare.log'
 
 
@@ -61,7 +61,7 @@ def preprocess(df: pd.DataFrame, label_dict = None):
 
     X, y = oversample(X, y)
     
-    # X, pca_time = preprocess_pca(X)
+    X, pca_time = preprocess_pca(X)
 
     return X, y
 
@@ -126,8 +126,9 @@ def oversample(X, y):
 
 def preprocess_pca(X):
     # PCA
+    pca = PCA(n_components=3)  # Specify the number of components
     # pca = PCA(n_components='mle', svd_solver='full')  # Specify the number of components
-    pca = PCA(n_components=0.9, svd_solver='auto', iterated_power='auto', tol=0.0, whiten=False, random_state=42)  # Specify the number of components
+    # pca = PCA(n_components=0.9, svd_solver='auto', iterated_power='auto', tol=0.0, whiten=False, random_state=42)  # Specify the number of components
     begin = time.time()
     X_pca = pca.fit_transform(X)
     end = time.time()
@@ -229,7 +230,7 @@ def test(model, X_test, y_test):
     logging.info(f"Confusion Matrix:\n{confusion_matrix(y_test, y_pred)}")
     logging.info(f"Classification Report:\n{classification_report(y_test, y_pred)}")
     logging.info(f"Log Loss: {loss:.4f}")
-    logging.info(f"Certainty Scores: {certainty_scores}")
+    logging.info(f"Certainty Scores: {np.array_str(certainty_scores)}")
     logging.info(f"Model prediction time: {prediction_time:2f}")
 
 def dump_model(model, model_type):

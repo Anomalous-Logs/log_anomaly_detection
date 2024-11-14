@@ -162,8 +162,10 @@ cython_debug/
 #.idea/
 
 # Data
+archive/
 data/
-model/
-
-# Training
+model*/
+_model/
 catboost_info/
+log/
+archive.7z
