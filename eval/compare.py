@@ -10,20 +10,24 @@ from xgboost import XGBClassifier
 from lightgbm import LGBMClassifier
 from sklearn.svm import SVC
 from sklearn.naive_bayes import GaussianNB, BernoulliNB, CategoricalNB, ComplementNB
+from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.tree import DecisionTreeClassifier
 from catboost import CatBoostClassifier
 from sklearn.metrics import classification_report, confusion_matrix, log_loss
-from sklearn.preprocessing import OneHotEncoder, StandardScaler
+from sklearn.preprocessing import OneHotEncoder, StandardScaler, MinMaxScaler
 from sklearn.pipeline import Pipeline, make_pipeline
 from sklearn.compose import ColumnTransformer
 from sklearn.impute import SimpleImputer
-from sklearn.decomposition import PCA
+from sklearn.decomposition import PCA, TruncatedSVD
 from sklearn.utils import resample
 from imblearn.over_sampling import SMOTE
 
-model_types = ['XGBoost', 'LightGBM', 'SVM', 'GaussianNB', 'CatBoostClassifier']
+
+model_types = ['LogisticRegression', 'DecisionTree', 'RandomForest', 'KNeighbors', 'XGBoost', 'LightGBM', 'CatBoost']
 log_file = 'compare.log'
 
-logging.basicConfig(filename=log_file, level=logging.INFO, format='%(message)s')
 
 def read_dataset(filename):
     # Load the dataset
@@ -51,13 +55,13 @@ def preprocess(df: pd.DataFrame, label_dict = None):
 
     X, y = undersample(X, y, 'Benign')
 
-    X = transform_data(X)
+    X = normalize(X)
 
     y = apply_mapping(y, label_dict)
 
     X, y = oversample(X, y)
     
-    X, pca_time = preprocess_pca(X)
+    # X, pca_time = preprocess_pca(X)
 
     return X, y
 
@@ -91,7 +95,7 @@ def apply_mapping(y, label_dict):
     y = y.map(label_dict)
     return y
 
-def transform_data(X):
+def normalize(X):
     # Encode categorical variables
     categorical_cols = X.select_dtypes(include=['object']).columns.tolist()
     X[categorical_cols] = X[categorical_cols].astype(str)  # Convert to string if not already
@@ -122,7 +126,8 @@ def oversample(X, y):
 
 def preprocess_pca(X):
     # PCA
-    pca = PCA(n_components='mle', svd_solver='covariance_eigh')  # Specify the number of components
+    # pca = PCA(n_components='mle', svd_solver='full')  # Specify the number of components
+    pca = PCA(n_components=0.9, svd_solver='auto', iterated_power='auto', tol=0.0, whiten=False, random_state=42)  # Specify the number of components
     begin = time.time()
     X_pca = pca.fit_transform(X)
     end = time.time()
@@ -139,13 +144,34 @@ def preprocess_pca(X):
 
     return X_pca, pca_time
 
+def preprocess_tsvd(X):
+    svd = TruncatedSVD(n_components=100, algorithm='arpack')  # Specify the number of components
+    begin = time.time()
+    X_svd = svd.fit_transform(X)
+    end = time.time()
+    svd_time = end-begin
+    
+    # Explained variance ratio to understand how much information is retained
+    explained_variance = svd.explained_variance_ratio_
+    logging.info(f"\nNumber of Components: {svd.n_components_}")
+    logging.info(f"\nNumber of Sampless: {svd.n_samples_}")
+    logging.info(f"\nFeatures in fit: {svd.n_features_in_}")
+    logging.info(f"\nNumber of Components: {svd.n_components_}")
+    logging.info(f"PCA time: {svd_time:2f}")
+    logging.info(f"Explained variance:\n{explained_variance}")
+
+    return X_svd, svd_time
+
+
 def init_model(model_type):
     if (model_type == 'XGBoost'):
         return XGBClassifier(eval_metric='logloss', random_state=42)
     if (model_type == 'LightGBM'):
         return LGBMClassifier(random_state=42)
+    if (model_type == 'LogisticRegression'):
+        return LogisticRegression(max_iter=200, random_state=42)
     if (model_type == 'SVM'):
-        return SVC(kernel="linear", random_state=42)
+        return SVC(kernel="rbf", max_iter=200, random_state=42)
     if (model_type == 'GaussianNB'):
         return GaussianNB()
     '''
@@ -154,9 +180,15 @@ def init_model(model_type):
     if (model_type == 'CategoricalNB'):
         return CategoricalNB(random_state=42)
     '''
-    if (model_type == 'ComplementNB'):
-        return ComplementNB()
-    if (model_type == 'CatBoostClassifier'):
+    # if (model_type == 'ComplementNB'):
+        # return ComplementNB()
+    if (model_type == 'DecisionTree'):
+        return DecisionTreeClassifier(random_state=42)
+    if (model_type == 'RandomForest'):
+        return RandomForestClassifier(random_state=42)
+    if (model_type == 'KNeighbors'):
+        return KNeighborsClassifier()
+    if (model_type == 'CatBoost'):
         return CatBoostClassifier(random_state=42)
     return None
 
@@ -209,7 +241,7 @@ def evaluate(X, y, model_type, dumps = True):
     logging.info('\n'+24*"="+f"\n{model_type}\n"+24*"="+'\n')
 
     # Train-test split
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42, stratify=y)
 
     model = init_model(model_type)
     model, execution_time = train(model, X_train, y_train)
@@ -220,6 +252,7 @@ def evaluate(X, y, model_type, dumps = True):
         dump_model(model, model_type)
 
 if __name__ == '__main__':
+    logging.basicConfig(filename=log_file, level=logging.INFO, format='%(message)s')
     df = read_dataset('data/CICFlowMeter_out.300000head.csv')
     label_dict = read_mapping('data/Readme.txt')
     X, y = preprocess(df, label_dict)
